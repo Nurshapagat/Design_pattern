@@ -8,7 +8,7 @@ public class Entity {
 	public static final char DRAGON = 'd';
 	public static final char GOBLIN = 'g';
 	public static final char GARGOYLE = 'G';
-	public static final char ZORK = 'z';
+	public static final char KING = 'k';
 	public static final char MINE = 'm';
 	public static final char HERO = 'h';
 

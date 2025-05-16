@@ -3,6 +3,8 @@ package src.entity;
 import java.awt.Graphics2D;
 import java.awt.image.BufferedImage;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 import javax.imageio.ImageIO;
 import src.main.GamePanel;
 
@@ -301,4 +303,29 @@ public class Player extends Entity{
 		spriteNum = 0;
 		animationTick = 0;
 	}
+
+	public void moveUp() {
+
+	}
+	private List<HealthObserver> observers = new ArrayList<>();
+
+	public void addObserver(HealthObserver observer) {
+		observers.add(observer);
+	}
+
+	public void removeObserver(HealthObserver observer) {
+		observers.remove(observer);
+	}
+
+	private void notifyHealthChanged() {
+		for (HealthObserver o : observers) {
+			o.onHealthChanged(hit_point);
+		}
+	}
+
+	public void setHitPoint(int hp) {
+		this.hit_point = hp;
+		notifyHealthChanged();
+	}
+
 }

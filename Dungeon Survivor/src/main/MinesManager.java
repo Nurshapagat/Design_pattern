@@ -127,12 +127,10 @@ public class MinesManager {
                 (col == 17 && row == 2) || (col == 16 && row == 2)) {
             return true;
         }
-        // Zork zone (если босс существует)
         Entity boss = (gp.monstersM != null && gp.monstersM.monsters != null && gp.monstersM.monsters.length > 0) ? gp.monstersM.monsters[0] : null;
-        if (boss != null && boss.symbol == Entity.ZORK) {
+        if (boss != null && boss.symbol == Entity.KING) {
             int bossCol = boss.getX() / gp.tileSize;
             int bossRow = boss.getY() / gp.tileSize;
-            // Запретить ставить на босса и в радиусе 1 клетки вокруг него
             if (Math.abs(col - bossCol) <= 1 && Math.abs(row - bossRow) <= 1) {
                 return true;
             }
@@ -140,86 +138,65 @@ public class MinesManager {
         return false;
     }
 
-    /** Вспомогательный метод проверки наложения на монстров */
     private boolean checkMonsterOverlap(int col, int row) {
         if (gp.monstersM != null && gp.monstersM.monsters != null) {
             for(Entity monster : gp.monstersM.monsters) {
                 if(monster != null) {
                     if(monster.getX() == col*gp.tileSize && monster.getY() == row*gp.tileSize) {
-                        return true; // Найдено наложение
+                        return true;
                     }
                 }
             }
         }
-        return false; // Наложений не найдено
+        return false;
     }
 
-    /** Вспомогательный метод проверки наложения на другие мины */
     private boolean checkMineOverlap(int col, int row, int currentPlacedCount) {
         if (mines != null) {
             for(int i = 0; i < currentPlacedCount; i++) {
                 if(mines[i] != null) {
                     if(mines[i].getX() == col*gp.tileSize && mines[i].getY() == row*gp.tileSize) {
-                        return true; // Найдено наложение
+                        return true;
                     }
                 }
             }
         }
-        return false; // Наложений не найдено
+        return false;
     }
-
-    /**
-     * Активирует флаг и координаты для анимации взрыва.
-     * @param mine Мина, которая взорвалась.
-     */
     public void setExplosion(Mine mine) {
         if (mine == null) return;
         explosion = true;
-        explosionX = mine.getX(); // Используем геттеры
+        explosionX = mine.getX();
         explosionY = mine.getY();
-        explosionCounter = 0; // Сбросить счетчик анимации
-        if(gp != null) gp.playSE(3); // Звук взрыва (убедитесь, что индекс 3 верный)
+        explosionCounter = 0;
     }
 
-    /**
-     * Рисует анимацию взрыва, если он активен.
-     * @param g2 Графический контекст для отрисовки.
-     */
     public void explode(Graphics2D g2) {
-        if (!explosion || images == null || images.length == 0 || gp == null) { // Если нет взрыва или картинки не загружены
+        if (!explosion || images == null || images.length == 0 || gp == null) {
             return;
         }
 
-        // Проверка, загружены ли изображения (хотя бы первое)
         if (images[0] == null) {
             System.err.println("Explosion images not loaded, cannot draw explosion.");
-            explosion = false; // Отключаем взрыв, чтобы не спамить ошибками
+            explosion = false;
             return;
         }
 
         int frameIndex = explosionCounter % images.length; // Получаем индекс текущего кадра
 
-        // Проверка, что конкретный кадр не null (на случай частичной загрузки)
         if (images[frameIndex] != null) {
             g2.drawImage(images[frameIndex], explosionX, explosionY, gp.tileSize, gp.tileSize, null);
         } else {
-            // Можно нарисовать заглушку, если кадр не загружен
-            // g2.setColor(Color.ORANGE);
-            // g2.fillRect(explosionX, explosionY, gp.tileSize, gp.tileSize);
         }
 
         explosionCounter++;
 
-        // Завершение анимации взрыва (например, после 3 полных циклов + немного)
-        // images.length * 3 = 39 кадров (3 цикла)
-        // Увеличим до 40-50 для небольшой задержки после последнего кадра
-        if(explosionCounter >= images.length * 3 + 5) { // Примерно 3.5 секунды при 1 кадре/тик
+        if(explosionCounter >= images.length * 3 + 5) {
             explosionCounter = 0;
-            explosion = false; // Завершаем взрыв
-            // Проверка смерти игрока ПОСЛЕ анимации взрыва (если урон нанесен в CollisionChecker)
+            explosion = false;
             if (gp.player != null && gp.player.hit_point <= 0) {
-                if (gp.panelState != gp.END) { // Чтобы не перезаписывать сообщение о смерти в бою
-                    gp.player.hit_point = 0; // Убедимся, что не отрицательное
+                if (gp.panelState != gp.END) {
+                    gp.player.hit_point = 0;
                     gp.es.setTitleTexts("You Died on a Mine! :(\nSteps: " + gp.player.steps + " Lvl: " + gp.player.level);
                     gp.panelState = gp.END;
                 }

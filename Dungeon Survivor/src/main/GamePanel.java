@@ -1,30 +1,23 @@
 package src.main;
 
-import java.awt.Color;
-import java.awt.Dimension;
-import java.awt.Font;
-import java.awt.Graphics;
-import java.awt.Graphics2D;
-import java.util.ArrayList;
+import java.awt.*;
+import java.util.*;
 import java.util.List;
-import java.util.Random;
-
-import javax.swing.JPanel;
-
+import javax.swing.*;
 import src.entity.Player;
 import src.screens.EndScreen;
 import src.screens.LevelScreen;
 import src.screens.StartScreen;
 import src.tile.TileManager;
 
-public class GamePanel extends JPanel implements Runnable{
+public class GamePanel extends JPanel implements Runnable {
 
-	final int originalTileSize = 16;
+	final int originalTileSize = 20;
 	final int scale = 3;
 
 	public final int tileSize = originalTileSize * scale;
-	public final int maxScreenCol = 19;
-	public final int maxScreenRow = 16;
+	public final int maxScreenCol = 24;
+	public final int maxScreenRow = 15;
 	public final int screenWidth = tileSize * maxScreenCol;
 	public final int screenHeight = tileSize * maxScreenRow;
 
@@ -50,6 +43,7 @@ public class GamePanel extends JPanel implements Runnable{
 	public MinesManager minesM;
 	public Player player = new Player(this);
 	public Sound sound = new Sound();
+
 	Thread gameThread;
 
 	public int currentLevel = 1;
@@ -57,10 +51,9 @@ public class GamePanel extends JPanel implements Runnable{
 	private String transitionMessage = null;
 	private int transitionMessageTimer = 0;
 
-	private List<String> mapFiles; // Сделали private
+	private List<String> mapFiles;
 	private Random randomMapSelector;
 	private String currentMapPath;
-
 
 	public GamePanel() {
 		this.setPreferredSize(new Dimension(screenWidth, screenHeight));
@@ -79,7 +72,6 @@ public class GamePanel extends JPanel implements Runnable{
 			setupNewGameComponents(mapFiles.get(0));
 		} else {
 			System.err.println("CRITICAL ERROR: Map files list is empty at GamePanel construction!");
-
 		}
 	}
 
@@ -94,7 +86,6 @@ public class GamePanel extends JPanel implements Runnable{
 		return mapFiles;
 	}
 
-
 	public void startGameThread() {
 		gameThread = new Thread(this);
 		currentLevel = 1;
@@ -105,14 +96,18 @@ public class GamePanel extends JPanel implements Runnable{
 			return;
 		}
 		player.setDefaultValues();
-		player.hit_point = ls.level;
+		player.hit_point = player.max_hit_point;
 		panelState = START;
+
+		sound.loadBackgroundMusic();
+		sound.playBackgroundMusic();
+
 		gameThread.start();
 	}
 
 	@Override
 	public void run() {
-		double drawInterval = 1_000_000_000/FPS;
+		double drawInterval = 1_000_000_000 / FPS;
 		double delta = 0;
 		long lastTime = System.nanoTime();
 		long currentTime;
@@ -120,7 +115,7 @@ public class GamePanel extends JPanel implements Runnable{
 
 		while(gameThread != null) {
 			currentTime = System.nanoTime();
-			delta += (currentTime - lastTime)/drawInterval;
+			delta += (currentTime - lastTime) / drawInterval;
 			timer += (currentTime - lastTime);
 			lastTime = currentTime;
 
@@ -184,16 +179,7 @@ public class GamePanel extends JPanel implements Runnable{
 		g2.dispose();
 	}
 
-	public void playMusic(int i) {
-		sound.setFile(i);
-		sound.play();
-		sound.loop();
-	}
-
-	public void stopMusic() {
-		sound.stop();
-	}
-
+	// Методы звука
 	public void playSE(int i) {
 		if(sound_off) return;
 		sound.setFile(i);
@@ -202,96 +188,42 @@ public class GamePanel extends JPanel implements Runnable{
 
 	public void toggle_sound() {
 		sound_off = !sound_off;
+		if(sound_off) {
+			sound.stopBackgroundMusic();
+		} else {
+			sound.playBackgroundMusic();
+		}
 	}
 
-	public void prepareNextLevel() {
-		currentLevel++;
-		if (currentLevel > MAX_LEVELS) {
-			panelState = END;
-			es.setTitleTexts("CONGRATULATIONS!\nYou Beat All Levels!\nTotal Steps: " + player.steps);
-		} else {
-			showTransitionMessage("Level " + currentLevel, 120);
+	public void stopBackgroundMusic() {
+		sound.stopBackgroundMusic();
+	}
 
-			String nextMapPath = currentMapPath;
-			List<String> availableMaps = getMapFiles(); // Используем геттер
+	public void restart() {
+	}
 
-			if (availableMaps != null && !availableMaps.isEmpty()) {
-				if (currentLevel -1 < availableMaps.size()) {
-					nextMapPath = availableMaps.get(currentLevel - 1);
-				} else {
-					nextMapPath = availableMaps.get(availableMaps.size() - 1);
-				}
-			} else {
-				System.err.println("Map files list is null or empty in prepareNextLevel!");
-			}
+	public void handleZorkDefeat(int monsterIndex) {
+		System.out.println("Boss defeated!");
 
-			setupNewGameComponents(nextMapPath);
+		if (currentLevel < MAX_LEVELS) {
+			currentLevel++;
+			System.out.println("Loading level " + currentLevel);
 
+			setupNewGameComponents(mapFiles.get(currentLevel - 1));
 			player.setDefaultValues();
-			player.hit_point = ls.level + ((currentLevel - 1) * 50);
+			player.hit_point = player.max_hit_point;
 
-			player.gameState = player.MOVE;
-			player.movingState = 0;
-			battleM.rolling = false;
-			battleM.diceCounter = 0;
-			battleM.battleState = 0;
-			if (battleM.monsterIndex != -1 && monstersM != null && battleM.monsterIndex < monstersM.monsters.length) { // Добавил проверку monstersM != null
-				if(monstersM.monsters[battleM.monsterIndex] != null) {
-					monstersM.monsters[battleM.monsterIndex].visable = false;
-				}
+			if(monstersM != null) {
+				monstersM.setMonsters();
 			}
-			battleM.monsterIndex = -1;
-		}
-	}
 
-	public void handleZorkDefeat(int defeatedZorkIndex) {
-		if (monstersM != null && defeatedZorkIndex >= 0 && defeatedZorkIndex < monstersM.monsters.length && monstersM.monsters[defeatedZorkIndex] != null) {
-			// --- ОПЫТ ЗА ЗОРКА ---
-			player.gainExperience(monstersM.monsters[defeatedZorkIndex].experienceDropped);
-			// --- КОНЕЦ ОПЫТА ЗА ЗОРКА ---
-			monstersM.monster_remaning--; // Уменьшаем только если это не Зорк, или если Зорк входит в этот счетчик
-			monstersM.monsters[defeatedZorkIndex] = null;
-		}
+			panelState = GAME;
 
-
-
-		player.gameState = player.MOVE;
-		player.movingState = 0;
-		battleM.rolling = false;
-		battleM.diceCounter = 0;
-		battleM.battleState = 0;
-		prepareNextLevel();
-	}
-
-
-	public void showTransitionMessage(String message, int durationFrames) {
-		this.transitionMessage = message;
-		this.transitionMessageTimer = durationFrames;
-	}
-
-	void restart() {
-		currentLevel = 1;
-		List<String> availableMaps = getMapFiles();
-		if (availableMaps != null && !availableMaps.isEmpty()) {
-			setupNewGameComponents(availableMaps.get(0));
+			transitionMessage = "Level " + currentLevel;
+			transitionMessageTimer = 120;
 		} else {
-			System.err.println("CRITICAL ERROR: Map files list is null or empty! Cannot restart properly.");
-			return;
+			panelState = END;
+			es.setTitleTexts("Поздравляем! Вы выиграли все уровни!");
 		}
-
-
-		player.setDefaultValues(); // ВАЖНО: Сбрасываем игрока к начальным параметрам 1-го уровня
-		player.hit_point = player.max_hit_point;
-
-		battleM = new BattleManager(this);
-		cChecker = new CollisionChecker(this);
-
-		player.gameState = player.MOVE;
-		player.movingState = 0;
-		showTransitionMessage("Level " + currentLevel, 120);
-	}
-
-	public String getCurrentMapPath() {
-		return currentMapPath;
 	}
 }

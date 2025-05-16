@@ -97,18 +97,15 @@ public class BattleManager {
             }
         }
 
-        // --- Проверка начала боя ---
         if(gp.player.gameState == gp.player.MOVE) {
             for(int i = 0; i < gp.monstersM.monsters.length; i++) {
                 Entity monster = gp.monstersM.monsters[i];
                 if(monster != null &&
-                        gp.player.getX() == monster.getX() &&  // Используем геттеры
-                        gp.player.getY() == monster.getY()) {  // Используем геттеры
-
+                        gp.player.getX() == monster.getX() &&
+                        gp.player.getY() == monster.getY()) {
                     monsterIndex = i;
                     monster.visable = true;
-                    // Установка направления монстра лицом к игроку
-                    if(gp.player.direction != null){ // Проверка на null
+                    if(gp.player.direction != null){
                         switch (gp.player.direction){
                             case Entity.UP:    monster.direction = Entity.DOWN;  break;
                             case Entity.DOWN:  monster.direction = Entity.UP;    break;
@@ -116,24 +113,22 @@ public class BattleManager {
                             case Entity.RIGHT: monster.direction = Entity.LEFT;  break;
                         }
                     } else {
-                        monster.direction = Entity.DOWN; // Направление по умолчанию, если у игрока нет направления
+                        monster.direction = Entity.DOWN;
                     }
-                    setBattle(); // Начать бой
+                    setBattle();
                     break;
                 }
             }
         }
-        // --- Логика боя ---
         else if(gp.player.gameState == gp.player.BATTLE && monsterIndex >= 0 && monsterIndex < gp.monstersM.monsters.length && gp.monstersM.monsters[monsterIndex] != null) {
             Entity currentMonster = gp.monstersM.monsters[monsterIndex];
 
             if(rolling) {
-                if(gp != null) gp.playSE(0);
+                if(gp != null) ;
                 if(diceCounter < 50) {
-                    // --- Анимация костей ---
-                    if(battleState == 0) { // Initiative
+                    if(battleState == 0) {
                         gp.player.dice[0] = randomGen.nextInt(6) + 1;
-                        if (currentMonster.dice != null) currentMonster.dice[0] = randomGen.nextInt(6) + 1; // Защита от NullPointerException для dice монстра
+                        if (currentMonster.dice != null) currentMonster.dice[0] = randomGen.nextInt(6) + 1;
                     } else if(battleState == 11 || battleState == 13 || battleState == 4 || battleState == 3) {
                         gp.player.dice[0] = randomGen.nextInt(6) + 1;
                         gp.player.dice[1] = randomGen.nextInt(6) + 1;
@@ -141,7 +136,7 @@ public class BattleManager {
                             currentMonster.dice[0] = randomGen.nextInt(6) + 1;
                             currentMonster.dice[1] = randomGen.nextInt(6) + 1;
                         }
-                    } else if(battleState == 2) { // Monster attack
+                    } else if(battleState == 2) {
                         if (currentMonster.dice != null) {
                             currentMonster.dice[0] = randomGen.nextInt(6) + 1;
                             currentMonster.dice[1] = randomGen.nextInt(6) + 1;
@@ -149,10 +144,9 @@ public class BattleManager {
                     }
                     diceCounter++;
                 }
-                else { // Анимация броска завершена
+                else {
                     rolling = false;
                     diceCounter = 0;
-                    // Защита от нулевых костей
                     gp.player.dice[0] = (gp.player.dice != null && gp.player.dice[0] == 0) ? 1 : gp.player.dice[0];
                     gp.player.dice[1] = (gp.player.dice != null && gp.player.dice[1] == 0) ? 1 : gp.player.dice[1];
                     if(currentMonster != null && currentMonster.dice != null) {
@@ -160,110 +154,102 @@ public class BattleManager {
                         currentMonster.dice[1] = (currentMonster.dice[1] == 0) ? 1 : currentMonster.dice[1];
                     }
 
-                    // --- Применение результатов броска ---
                     if(battleState == 0) {
                         if(gp.player.dice[0] > currentMonster.dice[0]) battleState = 1;
                         else if(gp.player.dice[0] < currentMonster.dice[0]) battleState = 2;
                         else battleState = 3;
                     }
-                    else if(battleState == 11) { // Обычная атака игрока
-                        if(gp != null) gp.playSE(1);
+                    else if(battleState == 11) {
+                        if(gp != null) ;
                         int diceSum = gp.player.dice[0]*10 + gp.player.dice[1];
                         if(gp.player.dice[0] == gp.player.dice[1]) diceSum += 100;
                         currentMonster.hit_point -= calculateDamage(gp.player, currentMonster, diceSum, 1.0);
-                        if(currentMonster.hit_point <= 0) { currentMonster.hit_point = 0; if (currentMonster.symbol == Entity.ZORK) {gp.handleZorkDefeat(monsterIndex); return;} else battleState = 4;} else battleState = 2;
+                        if(currentMonster.hit_point <= 0) { currentMonster.hit_point = 0; if (currentMonster.symbol == Entity.KING) {gp.handleZorkDefeat(monsterIndex); return;} else battleState = 4;} else battleState = 2;
                     }
-                    else if (battleState == 13) { // Сильная атака игрока
+                    else if (battleState == 13) {
                         if(gp != null) gp.playSE(1);
                         int diceSum = gp.player.dice[0]*10 + gp.player.dice[1];
                         if(gp.player.dice[0] == gp.player.dice[1]) diceSum += 100;
                         currentMonster.hit_point -= calculateDamage(gp.player, currentMonster, diceSum, STRONG_ATTACK_MULTIPLIER);
-                        if(currentMonster.hit_point <= 0) { currentMonster.hit_point = 0; if (currentMonster.symbol == Entity.ZORK) {gp.handleZorkDefeat(monsterIndex); return;} else battleState = 4;} else battleState = 2;
+                        if(currentMonster.hit_point <= 0) { currentMonster.hit_point = 0; if (currentMonster.symbol == Entity.KING) {gp.handleZorkDefeat(monsterIndex); return;} else battleState = 4;} else battleState = 2;
                     }
-                    else if(battleState == 2) { // Атака монстра
-                        if(gp != null) gp.playSE(1);
+                    else if(battleState == 2) {
+                        if(gp != null) ;
                         int diceSum = currentMonster.dice[0]*10 + currentMonster.dice[1];
-                        if(currentMonster.symbol == Entity.ZORK && currentMonster.dice[0] == currentMonster.dice[1]) diceSum += 100;
+                        if(currentMonster.symbol == Entity.KING && currentMonster.dice[0] == currentMonster.dice[1]) diceSum += 100;
                         gp.player.hit_point -= calculateDamage(currentMonster, gp.player, diceSum, 1.0);
                         if(gp.player.hit_point <= 0) { gp.player.hit_point = 0; gp.panelState = gp.END; gp.es.setTitleTexts("You Died :(\nSteps: " + gp.player.steps + " Lvl: " + gp.player.level); return;} else battleState = 1;
                     }
-                    else if(battleState == 3) { // Одновременная
+                    else if(battleState == 3) {
                         if(gp != null) gp.playSE(1);
                         int pDice = gp.player.dice[0]*10 + gp.player.dice[1]; if(gp.player.dice[0]==gp.player.dice[1]) pDice+=100;
-                        int mDice = currentMonster.dice[0]*10 + currentMonster.dice[1]; if(currentMonster.symbol==Entity.ZORK && currentMonster.dice[0]==currentMonster.dice[1]) mDice+=100;
+                        int mDice = currentMonster.dice[0]*10 + currentMonster.dice[1]; if(currentMonster.symbol==Entity.KING && currentMonster.dice[0]==currentMonster.dice[1]) mDice+=100;
                         currentMonster.hit_point -= calculateDamage(gp.player, currentMonster, pDice, 1.0);
                         gp.player.hit_point -= calculateDamage(currentMonster, gp.player, mDice, 1.0);
                         if(gp.player.hit_point <= 0) { gp.player.hit_point = 0; gp.panelState = gp.END; gp.es.setTitleTexts("You Died :(\nSteps: " + gp.player.steps + " Lvl: " + gp.player.level); return;}
-                        if(currentMonster.hit_point <= 0) { currentMonster.hit_point = 0; if (currentMonster.symbol == Entity.ZORK) {gp.handleZorkDefeat(monsterIndex); return;} else battleState = 4;} else battleState = 0;
+                        if(currentMonster.hit_point <= 0) { currentMonster.hit_point = 0; if (currentMonster.symbol == Entity.KING) {gp.handleZorkDefeat(monsterIndex); return;} else battleState = 4;} else battleState = 0;
                     }
-                    else if(battleState == 4) { // Лечение после боя
+                    else if(battleState == 4) {
                         int heal = gp.player.dice[0]*10 + gp.player.dice[1];
                         gp.player.hit_point += heal;
                         if (gp.player.hit_point > gp.player.max_hit_point) gp.player.hit_point = gp.player.max_hit_point;
                         lastPlayerActionInfo = "Player healed for " + heal + " HP.";
                         messageTimer = MESSAGE_DURATION;
-                        // endBattleNormalMonster() будет вызван после паузы
                     }
-                    // Сброс костей после их использования (кроме лечения)
                     if (battleState != 4) {
                         if(gp.player.dice != null) { gp.player.dice[0] = 0; gp.player.dice[1] = 0; }
                         if (currentMonster != null && currentMonster.dice != null) {currentMonster.dice[0] = 0; currentMonster.dice[1] = 0;}
                     }
                 }
             }
-            else { // !rolling
-                // --- Логика ожидания действий ---
-                if(battleState == 0) { // Ожидание броска на инициативу
+            else {
+                if(battleState == 0) {
                     if(gp.keyH.rPressed) { gp.keyH.rPressed = false; rolling = true; clearMessages(); }
                 }
-                else if (battleState == 1) { // Ожидание выбора игрока
-                    if (gp.keyH.rPressed) { // Обычная атака
+                else if (battleState == 1) {
+                    if (gp.keyH.rPressed) {
                         gp.keyH.rPressed = false; battleState = 11; rolling = true; clearMessages();
-                    } else if (gp.keyH.spell1Pressed) { // Лечение
+                    } else if (gp.keyH.spell1Pressed) {
                         gp.keyH.spell1Pressed = false;
                         if (gp.player.canCastHeal(HEAL_MANA_COST)) {
                             gp.player.castHeal(HEAL_MANA_COST, HEAL_BASE_AMOUNT);
                             lastPlayerActionInfo = "Player casts Heal! (+ " + (HEAL_BASE_AMOUNT + gp.player.intelligence * 2) + " HP)";
                             messageTimer = MESSAGE_DURATION;
-                            // if(gp != null) gp.playSE(INDEX_SOUND_HEAL);
-                            battleState = 2; // Сразу переход хода к монстру
+                            battleState = 2;
                         } else {
                             lastPlayerActionInfo = "Not enough mana for Heal!"; messageTimer = MESSAGE_DURATION;
-                            // if(gp != null) gp.playSE(INDEX_SOUND_NO_MANA);
                         }
                         clearMessages(false);
-                    } else if (gp.keyH.spell2Pressed) { // Сильная атака
+                    } else if (gp.keyH.spell2Pressed) {
                         gp.keyH.spell2Pressed = false;
                         if (gp.player.canCastStrongAttack(STRONG_ATTACK_MANA_COST)) {
                             gp.player.consumeManaForStrongAttack(STRONG_ATTACK_MANA_COST);
                             battleState = 13; rolling = true;
-                            // if(gp != null) gp.playSE(INDEX_SOUND_STRONG_ATTACK_CHARGE);
                         } else {
                             lastPlayerActionInfo = "Not enough mana for Strong Attack!"; messageTimer = MESSAGE_DURATION;
-                            // if(gp != null) gp.playSE(INDEX_SOUND_NO_MANA);
                         }
                         clearMessages();
                     }
                 }
-                else if(battleState == 2) { // Ход монстра
+                else if(battleState == 2) {
                     pauseCounter++;
                     if(pauseCounter >= 60) { pauseCounter = 0; rolling = true; clearMessages(); }
                 }
-                else if(battleState == 3) { // Одновременная атака
+                else if(battleState == 3) {
                     if(gp.keyH.rPressed) { gp.keyH.rPressed = false; rolling = true; clearMessages(); }
                 }
-                else if(battleState == 4) { // Лечение после боя
+                else if(battleState == 4) {
                     boolean diceAlreadyRolledForHeal = (gp.player.dice != null && (gp.player.dice[0] != 0 || gp.player.dice[1] != 0));
                     if (!diceAlreadyRolledForHeal && !rolling) {
                         if(gp.keyH.rPressed) {
                             gp.keyH.rPressed = false; rolling = true; clearMessages(false);
                         }
-                    } else if (diceAlreadyRolledForHeal && !rolling) { // Кости были брошены, ждем паузу
+                    } else if (diceAlreadyRolledForHeal && !rolling) {
                         pauseCounter++;
                         if (pauseCounter >= MESSAGE_DURATION + 20) {
                             pauseCounter = 0;
                             endBattleNormalMonster();
-                            if(gp.player.dice != null) { gp.player.dice[0] = 0; gp.player.dice[1] = 0; } // Сброс костей
+                            if(gp.player.dice != null) { gp.player.dice[0] = 0; gp.player.dice[1] = 0; }
                         }
                     }
                 }
@@ -274,7 +260,6 @@ public class BattleManager {
     private void clearMessages(boolean clearPlayerToo) {
         if (clearPlayerToo && lastPlayerActionInfo != null) lastPlayerActionInfo = "";
         if (lastMonsterAttackInfo != null) lastMonsterAttackInfo = "";
-        // messageTimer = 0; // Сбрасывать таймер не нужно, он сам сбросит сообщения
     }
     private void clearMessages() {
         clearMessages(true);

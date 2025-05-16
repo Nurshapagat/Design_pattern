@@ -89,4 +89,12 @@ public class Goblin extends Entity{
             g2.drawImage(image, x, y, gp.tileSize, gp.tileSize, null);
         }
     }
+
+    public void attackPlayer() {
+
+    }
+
+    public void moveTowardPlayer() {
+
+    }
 }

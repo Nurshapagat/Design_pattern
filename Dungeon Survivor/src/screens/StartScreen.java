@@ -1,86 +1,67 @@
 package src.screens;
 
 import java.awt.*;
+import java.awt.image.BufferedImage;
+import java.io.IOException;
+import javax.imageio.ImageIO;
 import src.main.GamePanel;
 
 public class StartScreen {
 
     GamePanel gp;
+    BufferedImage titleImage;
     Font buttonsFont;
-    Font titleFont;
-    String titleText;
-    String playText;
-    String levelText;
-    String quitText;
+    public String[] menuTexts = {"PLAY", "LEVEL", "QUIT"};
     public int commandNum = 0;
 
     public StartScreen(GamePanel gp) {
         this.gp = gp;
-        this.buttonsFont = new Font("Segoe UI", Font.BOLD, 48);
-        this.titleFont = new Font("Georgia", Font.BOLD, 90);
-        titleText = "Dungeon Survivor";
-        playText = "PLAY";
-        levelText = "LEVEL";
-        quitText = "QUIT";
+        buttonsFont = new Font("Segoe UI", Font.BOLD, 48);
+        try {
+            titleImage = ImageIO.read(getClass().getResourceAsStream("/res/phone.png"));
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
     public void draw(Graphics2D g2) {
-        // Градиентный фон
-        GradientPaint gpBackground = new GradientPaint(
-                0, 0, new Color(30, 30, 30),
-                0, gp.screenHeight, new Color(70, 70, 70)
-        );
-        g2.setPaint(gpBackground);
-        g2.fillRect(0, 0, gp.screenWidth, gp.screenHeight);
-
-        // Заголовок с тенью
-        g2.setFont(titleFont);
-        int x = getXforCenteredText(titleText, g2);
-        int y = gp.tileSize * 3;
-
-        g2.setColor(Color.darkGray);
-        g2.drawString(titleText, x + 5, y + 5);
-        g2.setColor(new Color(255, 215, 0)); // Золотистый
-        g2.drawString(titleText, x, y);
-
-        // Линия под заголовком
-        g2.setColor(Color.white);
-        g2.fillRect(gp.screenWidth / 4, y + 10, gp.screenWidth / 2, 5);
-
-        // Кнопки
-        g2.setFont(buttonsFont);
-        y += gp.tileSize * 3;
-
-        drawButton(g2, playText, y, 0);
-        y += gp.tileSize * 2;
-
-        drawButton(g2, levelText, y, 1);
-        y += gp.tileSize * 2;
-
-        drawButton(g2, quitText, y, 2);
-    }
-
-    private void drawButton(Graphics2D g2, String text, int y, int index) {
-        int x = getXforCenteredText(text, g2);
-        boolean selected = (commandNum == index);
-
-        if (selected) {
-            // Закруглённый фон кнопки
-            g2.setColor(new Color(255, 255, 255, 40));
-            g2.fillRoundRect(x - 40, y - 45, gp.tileSize * 5, 60, 20, 20);
-
-            // Стрелка выбора
-            g2.setColor(Color.orange);
-            g2.drawString(">", x - gp.tileSize, y);
+        if (titleImage != null) {
+            g2.drawImage(titleImage, 0, 0, gp.screenWidth, gp.screenHeight, null);
+        } else {
+            GradientPaint gpBackground = new GradientPaint(
+                    0, 0, new Color(10, 10, 20),
+                    0, gp.screenHeight, new Color(40, 40, 60)
+            );
+            g2.setPaint(gpBackground);
+            g2.fillRect(0, 0, gp.screenWidth, gp.screenHeight);
         }
 
-        // Текст кнопки
-        g2.setColor(Color.white);
-        g2.drawString(text, x, y);
+        g2.setFont(buttonsFont);
+        int yStart = gp.screenHeight / 2;
+        int buttonHeight = gp.tileSize * 2;
+        int buttonWidth = gp.tileSize * 6;
+
+        for (int i = 0; i < menuTexts.length; i++) {
+            int x = (gp.screenWidth - buttonWidth) / 2;
+            int y = yStart + i * (buttonHeight + 20);
+
+            if (commandNum == i) {
+                g2.setColor(new Color(255, 165, 0, 180)); // Полупрозрачный оранжевый
+                g2.fillRoundRect(x, y, buttonWidth, buttonHeight, 30, 30);
+                g2.setColor(Color.white);
+            } else {
+                g2.setColor(new Color(50, 50, 50, 180));
+                g2.fillRoundRect(x, y, buttonWidth, buttonHeight, 30, 30);
+                g2.setColor(new Color(200, 200, 200));
+            }
+
+            FontMetrics fm = g2.getFontMetrics();
+            int textWidth = fm.stringWidth(menuTexts[i]);
+            int textX = x + (buttonWidth - textWidth) / 2;
+            int textY = y + ((buttonHeight - fm.getHeight()) / 2) + fm.getAscent();
+
+            g2.drawString(menuTexts[i], textX, textY);
+        }
     }
 
-    public int getXforCenteredText(String text, Graphics2D g2) {
-        int length = (int) g2.getFontMetrics().getStringBounds(text, g2).getWidth();
-        return (gp.screenWidth - length) / 2;
-    }
 }

@@ -28,10 +28,8 @@ public class EndScreen {
         int x = getXforCenteredText(titleText[0], g2);
         int y = gp.tileSize*3;
 
-        // shadow
         g2.setColor(Color.gray);
         g2.drawString(titleText[0], x+5, y+5);        
-        // main
         g2.setColor(Color.white);
         g2.drawString(titleText[0], x, y);
         
@@ -66,10 +64,7 @@ public class EndScreen {
         return x;
     }
 
-    // ... в EndScreen.java ...
     public void setTitleTexts(String text) {
-        // Если текст содержит \n, он будет разделен автоматически
         titleText = text.split("\n");
     }
-// ...
 }

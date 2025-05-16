@@ -24,14 +24,15 @@ public class King extends Entity{
     public void setDefaultValues() {
         super.setDefaultValues();
 
-        this.x = 17 * gp.tileSize;
+        this.x = 22 * gp.tileSize;
         this.y = 1 * gp.tileSize;
 
         max_hit_point = 500;
         hit_point = max_hit_point;
         visable = false;
 
-        symbol = ZORK;
+        symbol = KING;
+
 
         experienceDropped = 500;
         critChance = 0.15;
@@ -60,7 +61,7 @@ public class King extends Entity{
         }catch(IOException e) {
             e.printStackTrace();
         }catch(IllegalArgumentException e) {
-            System.err.println("Error loading zork images: " + e.getMessage());
+            System.err.println("Error loading king images: " + e.getMessage());
             e.printStackTrace();
         }
     }

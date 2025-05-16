@@ -26,7 +26,7 @@ public class MonstersManager {
     public void setMonsters() {
         if (gp == null || gp.tileM == null) {
             System.err.println("MonstersManager: GamePanel or TileManager is null, cannot set monsters.");
-            monsters = new Entity[0]; // Создаем пустой массив, чтобы избежать NullPointerException дальше
+            monsters = new Entity[0];
             monster_remaning = 0;
             return;
         }
@@ -52,7 +52,6 @@ public class MonstersManager {
             int[] chosenBossLocation = bossLocations.get(0);
             bossCol = chosenBossLocation[0];
             bossRow = chosenBossLocation[1];
-            System.out.println("Boss (Zork) found at map tile: (" + bossCol + ", " + bossRow + ")");
         } else {
             System.err.println("Boss tile (symbol '" + TileManager.boss_tile + "') not found! Placing Zork at default (1,10).");
             bossCol = 1;
@@ -68,13 +67,13 @@ public class MonstersManager {
         monsters = new Entity[total_num_other_monsters + 1];
 
         monsters[0] = new King(gp, bossCol, bossRow);
-        // monsters[0].visable = true; // Раскомментировать, если босс виден сразу
+        monsters[0].visable = true;
 
         Random random = new Random();
         int currentMonsterArrayIndex = 1;
 
-        int placementAttempts = 0; // Счетчик попыток, чтобы избежать бесконечного цикла
-        final int MAX_PLACEMENT_ATTEMPTS = total_num_other_monsters * 100; // Ограничение попыток
+        int placementAttempts = 0;
+        final int MAX_PLACEMENT_ATTEMPTS = total_num_other_monsters * 100;
 
         while(currentMonsterArrayIndex <= total_num_other_monsters && placementAttempts < MAX_PLACEMENT_ATTEMPTS) {
             placementAttempts++;
@@ -93,23 +92,22 @@ public class MonstersManager {
                 continue;
             }
 
+            // Проверяем, не занято ли место другим монстром
             boolean allowedPlacement = true;
-            // --- ИСПРАВЛЕНИЕ ЗДЕСЬ ---
             for(int i = 0; i < currentMonsterArrayIndex; i++) {
                 if(monsters[i] != null) {
-                    if(monsters[i].getX() == tryCol*gp.tileSize && monsters[i].getY() == tryRow*gp.tileSize) { // Используем геттеры
+                    if(monsters[i].getX() == tryCol * gp.tileSize && monsters[i].getY() == tryRow * gp.tileSize) {
                         allowedPlacement = false;
                         break;
                     }
                 }
             }
-            // --- КОНЕЦ ИСПРАВЛЕНИЯ ---
 
-            if(allowedPlacement && tileNumOnMap >= 0 && tileNumOnMap < gp.tileM.tiles.length && // Добавил проверку границ для tileNumOnMap
+            // Проверяем, что тайл подходит для размещения монстра
+            if(allowedPlacement && tileNumOnMap >= 0 && tileNumOnMap < gp.tileM.tiles.length &&
                     gp.tileM.tiles[tileNumOnMap] != null && gp.tileM.tiles[tileNumOnMap].symbol == TileManager.map_tile) {
 
                 boolean monsterPlacedThisIteration = false;
-                // Пытаемся разместить монстра, начиная с самого "редкого" или по порядку
                 if (dragonNum > 0) {
                     monsters[currentMonsterArrayIndex] = new Dragon(gp, tryCol, tryRow);
                     dragonNum--;
@@ -126,19 +124,19 @@ public class MonstersManager {
 
                 if (monsterPlacedThisIteration) {
                     currentMonsterArrayIndex++;
-                    placementAttempts = 0; // Сбросить счетчик попыток после успешного размещения
+                    placementAttempts = 0; // сброс счетчика после успешной постановки
                 }
             }
         }
+
         if (placementAttempts >= MAX_PLACEMENT_ATTEMPTS) {
-            System.err.println("MonstersManager: Could not place all monsters. Check map space or placement logic. Placed: " + (currentMonsterArrayIndex-1) + "/" + total_num_other_monsters);
-            // Обнуляем счетчик оставшихся монстров, чтобы не было несоответствия
+            System.err.println("MonstersManager: Could not place all monsters. Check map space or placement logic. Placed: " + (currentMonsterArrayIndex - 1) + "/" + total_num_other_monsters);
             monster_remaning = currentMonsterArrayIndex - 1;
         }
     }
 
     public void draw(Graphics2D g2) {
-        if (monsters == null) return; // Защита
+        if (monsters == null) return;
         for(Entity e : monsters) {
             if(e != null) {
                 e.draw(g2);

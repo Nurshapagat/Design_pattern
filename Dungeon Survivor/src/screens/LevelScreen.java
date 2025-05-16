@@ -34,10 +34,9 @@ public class LevelScreen {
         
         int y = gp.tileSize*7;
 
-        // shadow
+
         g2.setColor(Color.gray);
         g2.drawString(returnText, x+5, y+5);        
-        // main
         g2.setColor(Color.white);
         g2.drawString(returnText, x, y);
         
